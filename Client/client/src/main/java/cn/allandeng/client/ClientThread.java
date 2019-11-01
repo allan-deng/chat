@@ -27,6 +27,7 @@ import java.util.Scanner;
 
 import cn.allandeng.common.Massage;
 import cn.allandeng.common.MassageType;
+import cn.allandeng.server.CreateSocket;
 
 /**
   * @ClassName: ClientThread
@@ -97,7 +98,7 @@ public class ClientThread extends Thread{
 				
 					if (respond.getType() == MassageType.ONLINE_SUCCESS) {
 						System.out.println("登陆成功，当前用户为：" + uid);
-						
+						new ListenMassage(ois).start();
 						break;
 					}else {
 						System.out.println("登陆失败，3秒后重试");
@@ -219,5 +220,69 @@ public class ClientThread extends Thread{
 		//开始进行读写
 		readAndSend();	
 		
+	}
+}
+
+
+/**
+  * @ClassName: ListenMassage
+  * @Description: 内部类，用来监听服务器发回来的消息
+  * @author 邓依伦-Allan
+  * @date 2019年11月1日 下午5:10:14
+  *
+  */
+class ListenMassage extends Thread{
+	private ObjectInputStream ois = null;
+	private Massage buffer = null;
+	
+	/**
+	  * 创建一个新的实例 ListenMassage. 
+	  * <p>Title: </p>
+	  * <p>Description:  获得输入流</p>
+	  */
+	public ListenMassage(ObjectInputStream ois) {
+		this.ois = ois;
+	}
+	
+	/*
+	  * <p>Title: run</p>
+	  * <p>Description: </p>
+	  * @see java.lang.Thread#run()
+	  */
+	@Override
+	public void run(){
+		//死循环
+		while (true) {
+			try {
+				buffer = (Massage)ois.readObject();
+			} catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			System.out.println("收到服务器发的消息。");
+			switch (buffer.getType()) {
+			case TEXT:
+				int uid = buffer.getSendUID();
+				int receiveuid =buffer.getReceiveUID();
+				if(receiveuid == 0 ) {
+					//群发
+					System.out.println(uid + "对所有人说：");
+					
+				}else {
+					//点对点发送
+					System.out.println(uid + "对我说：");
+					
+				}
+				System.out.println(buffer.getText());
+				buffer = null;
+				break;
+			default:
+				
+				break;
+			}
+		}
 	}
 }
