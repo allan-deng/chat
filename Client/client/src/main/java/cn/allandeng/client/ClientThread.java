@@ -22,8 +22,12 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Scanner;
+
 
 import cn.allandeng.common.Massage;
 import cn.allandeng.common.MassageType;
@@ -40,9 +44,9 @@ public class ClientThread extends Thread{
 	private static final int SERVER_PORT = 6666;
 	private static final String IP_ADDRESS = "127.0.0.1";
 	private Socket socket;
-	private int uid ;
-
-
+	private static int uid ;
+	
+	
 	private ObjectInputStream ois = null;
 	private ObjectOutputStream oos = null;
 	//private Scanner keyin = null;
@@ -92,7 +96,7 @@ public class ClientThread extends Thread{
 			while(true) {
 				try {
 					oos.writeObject(new Massage(MassageType.ONLINE, uid, 0));
-					System.out.println("发送成功");
+					//System.out.println("发送成功");
 					Massage respond = null;
 					respond = (Massage)ois.readObject();
 				
@@ -115,7 +119,7 @@ public class ClientThread extends Thread{
 				}
 			}
 		
-			System.out.println("出循环了");
+			//System.out.println("出循环了");
 		}catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -139,13 +143,13 @@ public class ClientThread extends Thread{
 
 			System.out.println("请输入聊天内容");
 			//while(true) {
-			System.out.println(keyin.hashCode());
+			//System.out.println(keyin.hashCode());
 			while((tip = keyin.readLine()) != null) {
 				Massage sendMassage = new Massage(MassageType.TEXT, uid, 0);
-				System.out.println("收到输入:" + tip);
+				//System.out.println("收到输入:" + tip);
 				//tip = keyin.nextLine();
 				if (tip.length()>0) {
-					System.out.println("收到输入:" + tip);
+					//System.out.println("收到输入:" + tip);
 					//判断是否为下线消息
 					if(tip.equals(":quit")) {
 						sendMassage.setType(MassageType.OFFLINE);
@@ -157,21 +161,21 @@ public class ClientThread extends Thread{
 					//判断是群发还是单发消息
 					//存在@开头并且有：则为群发
 					if(tip.charAt(0) == '@' && tip.indexOf(':')>0) {
-						System.out.println("群发消息");
+						//System.out.println("群发消息");
 						sendMassage.setType(MassageType.TEXT);
 						sendMassage.setReceiveUID(
-								Integer.parseInt(tip.substring(1,tip.indexOf(':')-1))
+								Integer.parseInt(tip.substring(1,tip.indexOf(':')))
 								);
-						sendMassage.setText(tip.substring(tip.indexOf(':')+1, tip.length()-1));
+						sendMassage.setText(tip.substring(tip.indexOf(':')+1, tip.length()));
 						oos.writeObject(sendMassage);
-						System.out.println(sendMassage.getText());
+						//System.out.println(sendMassage.getText());
 					}else {
-						System.out.println("单发消息");
+						//System.out.println("单发消息");
 						sendMassage.setType(MassageType.TEXT);
 						sendMassage.setReceiveUID(0);
 						sendMassage.setText(tip);
 						oos.writeObject(sendMassage);
-						System.out.println(sendMassage);
+						//System.out.println(sendMassage);
 					}
 				}
 			}
@@ -221,6 +225,14 @@ public class ClientThread extends Thread{
 		readAndSend();	
 		
 	}
+	
+	/**
+	 * getter method
+	 * @return the uid
+	 */
+	public static int getUid() {
+		return uid;
+	}
 }
 
 
@@ -234,6 +246,8 @@ public class ClientThread extends Thread{
 class ListenMassage extends Thread{
 	private ObjectInputStream ois = null;
 	private Massage buffer = null;
+	
+	private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
 	/**
 	  * 创建一个新的实例 ListenMassage. 
@@ -258,25 +272,36 @@ class ListenMassage extends Thread{
 			} catch (ClassNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+			}  catch (SocketException e) {
+				// TODO: handle exception
+				System.out.println("网络错误，服务器已下线？");
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			System.out.println("收到服务器发的消息。");
+			//System.out.println("收到服务器发的消息。");
 			switch (buffer.getType()) {
 			case TEXT:
 				int uid = buffer.getSendUID();
 				int receiveuid =buffer.getReceiveUID();
-				if(receiveuid == 0 ) {
+				System.out.println("---" + df.format(new Date()) 
+						+ "---");
+				if(receiveuid == 0) {
 					//群发
 					System.out.println(uid + "对所有人说：");
 					
 				}else {
 					//点对点发送
-					System.out.println(uid + "对我说：");
+					if (uid == ClientThread.getUid() ) {
+						System.out.println("我对"+ receiveuid +"说：");
+					}else {
+						System.out.println(uid + "对我说：");
+					}
+					
 					
 				}
 				System.out.println(buffer.getText());
+				System.out.println(new String(new char[25]).replace("\0", "-"));
 				buffer = null;
 				break;
 			default:

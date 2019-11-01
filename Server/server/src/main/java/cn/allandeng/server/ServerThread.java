@@ -15,6 +15,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import cn.allandeng.server.model.ClientsMap;
 import cn.allandeng.common.Massage;
 import cn.allandeng.common.MassageType;
@@ -31,6 +34,7 @@ public class ServerThread extends Thread{
 	ObjectInputStream ois = null;
 	ObjectOutputStream oos = null;
 	
+	private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
 	//构造器 用来获取Socket对象
 	/**
@@ -45,22 +49,22 @@ public class ServerThread extends Thread{
 	public void run() {
 		try {
 			//获取Socket的对象输入输出流
-			System.out.println("已启动一个服务线程");
+			//System.out.println("已启动一个服务线程");
 			oos = new ObjectOutputStream(socket.getOutputStream());
 			ois = new ObjectInputStream(socket.getInputStream());
-			System.out.println("创建输入输出流完成");
+			//System.out.println("创建输入输出流完成");
 			//接收到的massage对象
 			Massage buffer = null;
 			
 			//已对象为单位收发数据
 			while (true) {
 				buffer = (Massage)ois.readObject();
-				System.out.println(buffer);
-				System.out.println(buffer.getText());
-				System.out.println("收到消息。");
+				//System.out.println(buffer);
+				//System.out.println(buffer.getText());
+				//System.out.println("收到消息。");
 				switch (buffer.getType()) {
 				case ONLINE:
-					System.out.println("收到上线消息");
+					//System.out.println("收到上线消息");
 					serverOnline(buffer , CreateSocket.clients ,oos);
 					buffer = null;
 					break;
@@ -69,7 +73,7 @@ public class ServerThread extends Thread{
 					buffer = null;
 					break;
 				case TEXT:
-					System.out.println(buffer+buffer.getText());
+					//System.out.println(buffer+buffer.getText());
 					serverForwardMassage(buffer , CreateSocket.clients);
 					buffer = null;
 					break;
@@ -82,8 +86,8 @@ public class ServerThread extends Thread{
 			
 		} catch (Exception e) {
 			// 如果发生异常说明这个客户端下线了
-			e.printStackTrace();
-			System.out.println("客户端异常下线：" + CreateSocket.clients.getKeyByValue(oos));
+			//e.printStackTrace();
+			System.out.println("客户端下线：" + CreateSocket.clients.getKeyByValue(oos));
 			serverClose();
 		}
 	}
@@ -100,6 +104,8 @@ public class ServerThread extends Thread{
 	private void serverForwardMassage(Massage buffer, ClientsMap<Integer, ObjectOutputStream> clients) {
 		int uid = buffer.getSendUID();
 		int receiveuid =buffer.getReceiveUID();
+		System.out.println("---" + df.format(new Date()) 
+		+ "---");
 		if(receiveuid == 0 ) {
 			//群发
 			System.out.println(uid + "对所有人说：");
@@ -117,6 +123,7 @@ public class ServerThread extends Thread{
 				System.out.println(uid + "对" + receiveuid +"说：");
 				try {
 					clients.map.get(receiveuid).writeObject(buffer);
+					clients.map.get(uid).writeObject(buffer);
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -126,7 +133,7 @@ public class ServerThread extends Thread{
 			}
 		}
 		System.out.println(buffer.getText());
-		
+		System.out.println(new String(new char[25]).replace("\0", "-"));
 	}
 
 
