@@ -12,16 +12,12 @@ package cn.allandeng.server;
 
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-
-import com.sun.media.jfxmedia.events.NewFrameEvent;
-
 import cn.allandeng.server.model.ClientsMap;
-import cn.allandeng.server.model.Massage;
-import cn.allandeng.server.model.MassageType;
+import cn.allandeng.common.Massage;
+import cn.allandeng.common.MassageType;
 
 /**
   * @ClassName: ServerThread
@@ -49,6 +45,7 @@ public class ServerThread extends Thread{
 	public void run() {
 		try {
 			//获取Socket的对象输入输出流
+			System.out.println("已启动一个服务线程");
 			oos = new ObjectOutputStream(socket.getOutputStream());
 			ois = new ObjectInputStream(socket.getInputStream());
 			System.out.println("创建输入输出流完成");
@@ -56,27 +53,36 @@ public class ServerThread extends Thread{
 			Massage buffer = null;
 			
 			//已对象为单位收发数据
-			while ((buffer = (Massage)ois.readObject()) != null) {
+			while (true) {
+				buffer = (Massage)ois.readObject();
+				System.out.println(buffer);
+				System.out.println(buffer.getText());
 				System.out.println("收到消息。");
 				switch (buffer.getType()) {
 				case ONLINE:
 					System.out.println("收到上线消息");
 					serverOnline(buffer , CreateSocket.clients ,oos);
+					buffer = null;
 					break;
 				case OFFLINE:
 					serverOffline(buffer);
+					buffer = null;
 					break;
 				case TEXT:
+					System.out.println(buffer+buffer.getText());
 					serverForwardMassage(buffer , CreateSocket.clients);
+					buffer = null;
 					break;
 				default:
 					break;
 				}
 			}
-			System.out.println("处理线程结束");
+			
+			//System.out.println("处理线程结束");
 			
 		} catch (Exception e) {
 			// 如果发生异常说明这个客户端下线了
+			e.printStackTrace();
 			System.out.println("客户端异常下线：" + CreateSocket.clients.getKeyByValue(oos));
 			serverClose();
 		}
@@ -165,7 +171,7 @@ public class ServerThread extends Thread{
 			
 			e.printStackTrace();
 			System.out.println("用户异常下线：" + uid);
-			serverClose();
+			//serverClose();
 		}
 		
 	}

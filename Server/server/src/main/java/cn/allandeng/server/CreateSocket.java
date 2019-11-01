@@ -10,10 +10,12 @@
  */
 package cn.allandeng.server;
 
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import cn.allandeng.common.Massage;
 import cn.allandeng.server.model.ClientsMap;
 
 /**
@@ -39,6 +41,13 @@ public class CreateSocket extends Thread {
 				//客户机连接后创建新的ServerThread线程处理这个连接
 				Socket socket = ss.accept();
 				System.out.println("已连接上一台客户机");
+				
+//				ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+//				System.out.println("创建输入输出流完成");
+//				Massage buffer = (Massage)ois.readObject();
+//				System.out.println(buffer + buffer.getText());
+//				
+//				new sampleServer(socket).start();
 				new ServerThread(socket).start();
 			}
 			

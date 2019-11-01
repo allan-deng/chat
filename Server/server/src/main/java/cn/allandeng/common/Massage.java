@@ -8,7 +8,7 @@
  * @date 2019年10月31日 下午12:47:41
  * @version V1.0
  */
-package cn.allandeng.client.model;
+package cn.allandeng.common;
 
 import java.io.Serializable;
 

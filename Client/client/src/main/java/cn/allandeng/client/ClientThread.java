@@ -12,17 +12,21 @@ package cn.allandeng.client;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FilterInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Scanner;
 
-import cn.allandeng.client.model.Massage;
-import cn.allandeng.client.model.MassageType;
+import cn.allandeng.common.Massage;
+import cn.allandeng.common.MassageType;
 
 /**
   * @ClassName: ClientThread
@@ -40,11 +44,19 @@ public class ClientThread extends Thread{
 
 	private ObjectInputStream ois = null;
 	private ObjectOutputStream oos = null;
+	//private Scanner keyin = null;
 	private BufferedReader keyin = null;
+	private InputStream in = new FilterInputStream(System.in){
+        @Override
+        public void close() throws IOException {
+            //do nothing
+        }
+	};
 	
 	//初始化方法
 	public void init() {
 		boolean isConnected = false;
+		
 		do {
 			try {
 				//连接到服务器并获取输入输出流
@@ -71,7 +83,7 @@ public class ClientThread extends Thread{
 			}
 		} while (!isConnected);
 		
-		Scanner sc = new Scanner(System.in);
+		Scanner sc = new Scanner(in);
 		System.out.println("请输入用户ID：");
 		uid = sc.nextInt();
 		sc.close();
@@ -81,7 +93,7 @@ public class ClientThread extends Thread{
 					oos.writeObject(new Massage(MassageType.ONLINE, uid, 0));
 					System.out.println("发送成功");
 					Massage respond = null;
-					while ((respond = (Massage)ois.readObject()) != null)
+					respond = (Massage)ois.readObject();
 				
 					if (respond.getType() == MassageType.ONLINE_SUCCESS) {
 						System.out.println("登陆成功，当前用户为：" + uid);
@@ -102,7 +114,7 @@ public class ClientThread extends Thread{
 				}
 			}
 		
-			
+			System.out.println("出循环了");
 		}catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -118,15 +130,21 @@ public class ClientThread extends Thread{
 	  * @throws
 	  */
 	private void readAndSend() {
-		//创建一个键盘输入流
-		keyin =new BufferedReader(new InputStreamReader(System.in));
+		keyin = new BufferedReader(new InputStreamReader(in));
+		
 		String tip = "";
-		Massage sendMassage = new Massage(MassageType.TEXT, uid, 0);
+		
 		try {
-			while(true) {
-				//如果读取到字符串
-				if (( tip = keyin.readLine() )!= null) {
-					
+
+			System.out.println("请输入聊天内容");
+			//while(true) {
+			System.out.println(keyin.hashCode());
+			while((tip = keyin.readLine()) != null) {
+				Massage sendMassage = new Massage(MassageType.TEXT, uid, 0);
+				System.out.println("收到输入:" + tip);
+				//tip = keyin.nextLine();
+				if (tip.length()>0) {
+					System.out.println("收到输入:" + tip);
 					//判断是否为下线消息
 					if(tip.equals(":quit")) {
 						sendMassage.setType(MassageType.OFFLINE);
@@ -138,22 +156,28 @@ public class ClientThread extends Thread{
 					//判断是群发还是单发消息
 					//存在@开头并且有：则为群发
 					if(tip.charAt(0) == '@' && tip.indexOf(':')>0) {
+						System.out.println("群发消息");
 						sendMassage.setType(MassageType.TEXT);
 						sendMassage.setReceiveUID(
 								Integer.parseInt(tip.substring(1,tip.indexOf(':')-1))
 								);
 						sendMassage.setText(tip.substring(tip.indexOf(':')+1, tip.length()-1));
 						oos.writeObject(sendMassage);
+						System.out.println(sendMassage.getText());
 					}else {
+						System.out.println("单发消息");
 						sendMassage.setType(MassageType.TEXT);
 						sendMassage.setReceiveUID(0);
 						sendMassage.setText(tip);
+						oos.writeObject(sendMassage);
+						System.out.println(sendMassage);
 					}
 				}
 			}
 		} catch (Exception e) {
 			System.out.println("出现故障，系统退出");
-			closeClient();
+			e.printStackTrace();
+			//closeClient();
 			System.exit(1);
 		}
 		
@@ -193,7 +217,7 @@ public class ClientThread extends Thread{
 		//初始化 
 		init();
 		//开始进行读写
-		//readAndSend();	
+		readAndSend();	
 		
 	}
 }

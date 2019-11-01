@@ -8,7 +8,7 @@
  * @date 2019年10月31日 下午12:48:04
  * @version V1.0
  */
-package cn.allandeng.server.model;
+package cn.allandeng.common;
 
 /**
   * @ClassName: MassageType
