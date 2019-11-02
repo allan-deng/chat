@@ -104,11 +104,16 @@ public class ServerThread extends Thread{
 	private void serverForwardMassage(Massage buffer, ClientsMap<Integer, ObjectOutputStream> clients) {
 		int uid = buffer.getSendUID();
 		int receiveuid =buffer.getReceiveUID();
-		System.out.println("---" + df.format(new Date()) 
-		+ "---");
+		if (GlobalVariable.showChatMassage) {
+			System.out.println("---" + df.format(new Date()) + "---");
+		}
+		
 		if(receiveuid == 0 ) {
 			//群发
-			System.out.println(uid + "对所有人说：");
+			if (GlobalVariable.showChatMassage) {
+				System.out.println(uid + "对所有人说：");
+			}
+			
 			for (ObjectOutputStream oos:clients.valueSet()) {
 				try {
 					oos.writeObject(buffer);
@@ -120,7 +125,10 @@ public class ServerThread extends Thread{
 		}else {
 			//点对点发送
 			if (clients.map.containsKey(receiveuid)) {
-				System.out.println(uid + "对" + receiveuid +"说：");
+				if (GlobalVariable.showChatMassage) {
+					System.out.println(uid + "对" + receiveuid +"说：");
+				}
+				
 				try {
 					clients.map.get(receiveuid).writeObject(buffer);
 					clients.map.get(uid).writeObject(buffer);
@@ -129,11 +137,17 @@ public class ServerThread extends Thread{
 					e.printStackTrace();
 				}
 			}else {
-				System.out.println("目标用户：" + receiveuid + "不在线");
+				if (GlobalVariable.showChatMassage) {
+					System.out.println("目标用户：" + receiveuid + "不在线");
+				}
+				
 			}
 		}
-		System.out.println(buffer.getText());
-		System.out.println(new String(new char[25]).replace("\0", "-"));
+		if (GlobalVariable.showChatMassage) {
+			System.out.println(buffer.getText());
+			System.out.println(new String(new char[25]).replace("\0", "-"));
+		}
+		
 	}
 
 

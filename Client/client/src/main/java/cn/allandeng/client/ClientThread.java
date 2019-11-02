@@ -10,17 +10,13 @@
  */
 package cn.allandeng.client;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -31,7 +27,6 @@ import java.util.Scanner;
 
 import cn.allandeng.common.Massage;
 import cn.allandeng.common.MassageType;
-import cn.allandeng.server.CreateSocket;
 
 /**
   * @ClassName: ClientThread

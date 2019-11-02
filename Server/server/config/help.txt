@@ -1,0 +1,8 @@
+help		显示帮助
+about		关于Chat
+online		在线用户列表
+displayon	显示用户聊天消息
+displayoff	隐藏用户聊天消息
+
+ver 0.1
+Allan Deng Copyright @ 2019

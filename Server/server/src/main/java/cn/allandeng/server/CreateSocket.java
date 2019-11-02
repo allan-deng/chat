@@ -14,6 +14,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Map;
+import java.util.Set;
 
 import cn.allandeng.common.Massage;
 import cn.allandeng.server.model.ClientsMap;
@@ -67,5 +69,13 @@ public class CreateSocket extends Thread {
 	public void run() {
 		init();
 		super.run();
+	}
+	
+	/**
+	 * getter method
+	 * @return 在线用户set
+	 */
+	public static Set<Integer> getClientsID() {
+		return clients.map.keySet();
 	}
 }
