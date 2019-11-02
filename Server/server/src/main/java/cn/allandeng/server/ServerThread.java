@@ -19,6 +19,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Random;
 
+import cn.allandeng.server.data.Query;
 import cn.allandeng.server.model.ClientsMap;
 import cn.allandeng.common.Massage;
 import cn.allandeng.common.MassageType;
@@ -79,6 +80,12 @@ public class ServerThread extends Thread{
 					serverForwardMassage(buffer , CreateSocket.clients ,CreateSocket.userNicknames);
 					buffer = null;
 					break;
+				case QUERY:
+					//处理客户端发过来的指令
+					System.out.println("收到请求");
+					answerQuery(buffer , CreateSocket.clients ,CreateSocket.userNicknames);
+					buffer = null;
+					break;
 				default:
 					break;
 				}
@@ -91,6 +98,38 @@ public class ServerThread extends Thread{
 			//e.printStackTrace();
 			System.out.println("客户端下线：" + CreateSocket.clients.getKeyByValue(oos));
 			serverClose();
+		}
+	}
+
+
+	/**
+	  * @Title: answerQuery
+	  * @Description: TODO
+	  * @param @param buffer
+	  * @param @param clients
+	  * @param @param userNicknames    设定文件
+	  * @return void    返回类型
+	  * @throws
+	  */
+	private void answerQuery(Massage buffer, ClientsMap<Integer, ObjectOutputStream> clients,
+			ClientsMap<Integer, String> userNicknames) {
+		int uid = buffer.getSendUID();
+		Massage answerMassage = new Massage(MassageType.ANSWER, 0, uid);
+		answerMassage.setText(buffer.getText());
+		answerMassage.setSendObject(userNicknames.map);
+		//发送查询结果
+		if (clients.map.containsKey(uid)) {
+			try {
+				clients.map.get(uid).writeObject(answerMassage);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}else {
+			if (GlobalVariable.showChatMassage) {
+				System.out.println("目标用户：" + uid + "不在线");
+			}
+			
 		}
 	}
 
@@ -233,22 +272,13 @@ public class ServerThread extends Thread{
 	  * @throws
 	  */
 	private String queryNickname(int uid) {
-		// TODO Auto-generated method stub
-		//暂时直接用随机字符串代替
-		String str="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-	    Random random=new Random();
-	    StringBuffer sb=new StringBuffer();
-	    for(int i=0;i<5;i++){
-	      int number=random.nextInt(62);
-	      sb.append(str.charAt(number));
-	    }
-	    return sb.toString();
+		return new Query().getNickname(uid);
 	}
 
 
 	/**
 	  * @Title: validLogin
-	  * @Description: 核实用户名和密码
+	  * @Description: 核实用户名和密码,
 	  * @param @param uid
 	  * @param @param password
 	  * @param @return    设定文件
@@ -256,7 +286,8 @@ public class ServerThread extends Thread{
 	  * @throws
 	  */
 	private boolean validLogin(int uid, String password) {
-		if ( uid== Integer.parseInt(password) ) {
+		
+		if (new Query().isValidLoginInfo(uid, password)) {
 			return true;
 		}else {
 			return false;

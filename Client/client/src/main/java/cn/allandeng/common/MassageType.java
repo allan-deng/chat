@@ -18,5 +18,5 @@ package cn.allandeng.common;
   *
   */
 public enum MassageType {
-	TEXT , ONLINE , OFFLINE ,ONLINE_SUCCESS,ONLINE_FAIL
+	TEXT , ONLINE , OFFLINE ,ONLINE_SUCCESS,ONLINE_FAIL,QUERY,ANSWER
 }

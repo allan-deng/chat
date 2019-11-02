@@ -22,8 +22,11 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
-
+import java.util.Timer;
+import java.util.TimerTask;
 
 import cn.allandeng.common.Massage;
 import cn.allandeng.common.MassageType;
@@ -45,6 +48,8 @@ public class ClientThread extends Thread{
 	private static String password ;
 	private static String nickName ;
 	
+	//在线 用户表
+	public static Map<Integer, String> userOnline = new HashMap<>() ;
 	
 	private ObjectInputStream ois = null;
 	private ObjectOutputStream oos = null;
@@ -118,6 +123,7 @@ public class ClientThread extends Thread{
 						ClientMain.userInfo = new UserInfo(nickName);
 						System.out.println("登陆成功，当前用户ID为：" + uid+"，昵称为："+ nickName);
 						new ListenMassage(ois).start();
+						new Timer().schedule(new QueryOnlineUser() , 1000);
 						break;
 					}else {
 						if (respond.getType() == MassageType.ONLINE_FAIL) {
@@ -255,10 +261,13 @@ public class ClientThread extends Thread{
 
 	@Override
 	public void run() {
+
 		//初始化 
 		init();
 		//开始进行读写
 		readAndSend();	
+		
+		
 		
 	}
 	
@@ -321,7 +330,7 @@ class ListenMassage extends Thread{
 				int uid = buffer.getSendUID();
 				int receiveuid =buffer.getReceiveUID();
 				String uidNickname = buffer.getUserInfo().getNickName();
-				String receiveuidNickname = "我还没完成";
+				String receiveuidNickname = buffer.getUserInfo().getNickName();
 				System.out.println("---" + df.format(new Date()) 
 						+ "---");
 				if(receiveuid == 0) {
@@ -342,6 +351,23 @@ class ListenMassage extends Thread{
 				System.out.println(new String(new char[25]).replace("\0", "-"));
 				buffer = null;
 				break;
+			case ANSWER:
+				String ans = buffer.getText();
+				switch (ans) {
+				case "queryonline":
+					Map<Integer, String> m = (Map<Integer, String>)buffer.getSendObject();
+					ClientThread.userOnline = m ;
+					int i = 1  ;
+					for(Integer id:m.keySet()) {
+						System.out.println("第"+i+"个用户    ID:" + id+"   昵称："+m.get(id));
+						i++;
+					}
+					break;
+
+				default:
+					break;
+				}
+				break;
 			default:
 				
 				break;
@@ -349,3 +375,16 @@ class ListenMassage extends Thread{
 		}
 	}
 }
+
+
+class QueryOnlineUser extends TimerTask{
+	@Override
+	public void run() {
+		System.out.println("执行请求");
+		Massage queryMassage = new Massage(MassageType.QUERY, ClientThread.getUid(),0  );
+		queryMassage.setText("queryonline");
+		new Timer().schedule(new QueryOnlineUser(), 1000);
+	}
+	
+}
+

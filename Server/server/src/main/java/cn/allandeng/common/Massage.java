@@ -30,6 +30,8 @@ public class Massage implements Serializable{
 	private UserInfo userInfo;
 	private UserDetailInfo userDetailInfo;
 	
+	private Object sendObject;
+	
 	/**
 	  * 创建一个新的实例 Massage. 
 	  * <p>Title: </p>
@@ -133,5 +135,20 @@ public class Massage implements Serializable{
 		return userDetailInfo;
 	}
 	
+	/**
+	 * setter method
+	 * @param sendObject the sendObject to set
+	 */
+	public void setSendObject(Object sendObject) {
+		this.sendObject = sendObject;
+	}
+	
+	/**
+	 * getter method
+	 * @return the sendObject
+	 */
+	public Object getSendObject() {
+		return sendObject;
+	}
 	
 }
