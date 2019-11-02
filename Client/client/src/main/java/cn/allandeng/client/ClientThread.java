@@ -27,6 +27,8 @@ import java.util.Scanner;
 
 import cn.allandeng.common.Massage;
 import cn.allandeng.common.MassageType;
+import cn.allandeng.common.UserDetailInfo;
+import cn.allandeng.common.UserInfo;
 
 /**
   * @ClassName: ClientThread
@@ -40,6 +42,8 @@ public class ClientThread extends Thread{
 	private static final String IP_ADDRESS = "127.0.0.1";
 	private Socket socket;
 	private static int uid ;
+	private static String password ;
+	private static String nickName ;
 	
 	
 	private ObjectInputStream ois = null;
@@ -83,25 +87,61 @@ public class ClientThread extends Thread{
 			}
 		} while (!isConnected);
 		
+		//输入用户登陆信息
 		Scanner sc = new Scanner(in);
 		System.out.println("请输入用户ID：");
 		uid = sc.nextInt();
+		System.out.println("请输入用户密码：");
+		sc.nextLine();
+		password = sc.nextLine();
+//		System.out.println("请输入用户昵称：");
+//		nickName = sc.nextLine();
 		sc.close();
+		
+		//创建用户信息对象
+		ClientMain.userDetailInfo = new UserDetailInfo();
+		ClientMain.userDetailInfo.setPassword(password);
+		
+		//创建登陆用massage
+		Massage loginMassage = new Massage(MassageType.ONLINE, uid, 0);
+		loginMassage.setUserDetailInfo(ClientMain.userDetailInfo);
 		try {
 			while(true) {
 				try {
-					oos.writeObject(new Massage(MassageType.ONLINE, uid, 0));
+					oos.writeObject(loginMassage);
 					//System.out.println("发送成功");
 					Massage respond = null;
 					respond = (Massage)ois.readObject();
 				
 					if (respond.getType() == MassageType.ONLINE_SUCCESS) {
-						System.out.println("登陆成功，当前用户为：" + uid);
+						nickName = respond.getUserInfo().getNickName();
+						ClientMain.userInfo = new UserInfo(nickName);
+						System.out.println("登陆成功，当前用户ID为：" + uid+"，昵称为："+ nickName);
 						new ListenMassage(ois).start();
 						break;
 					}else {
-						System.out.println("登陆失败，3秒后重试");
-						sleep(3000);
+						if (respond.getType() == MassageType.ONLINE_FAIL) {
+							System.out.println("登陆信息错误");
+							//输入用户登陆信息
+							Scanner sc1 = new Scanner(in);
+							System.out.println("请输入用户ID：");
+							uid = sc1.nextInt();
+							System.out.println("请输入用户密码：");
+							sc1.nextLine();
+							password = sc1.nextLine();
+//							System.out.println("请输入用户昵称：");
+//							nickName = sc.nextLine();
+							sc1.close();
+							//新的登陆对象
+							loginMassage = new Massage(MassageType.ONLINE, uid, 0);
+							ClientMain.userDetailInfo = new UserDetailInfo();
+							ClientMain.userDetailInfo.setPassword(password);
+							loginMassage.setUserDetailInfo(ClientMain.userDetailInfo);
+						}else {
+							System.out.println("登陆失败，3秒后重试");
+							sleep(3000);
+						}
+						
 					}
 				} catch (IOException e) {
 					System.out.println("网络故障请重试！");
@@ -141,6 +181,7 @@ public class ClientThread extends Thread{
 			//System.out.println(keyin.hashCode());
 			while((tip = keyin.readLine()) != null) {
 				Massage sendMassage = new Massage(MassageType.TEXT, uid, 0);
+				sendMassage.setUserInfo(ClientMain.userInfo);
 				//System.out.println("收到输入:" + tip);
 				//tip = keyin.nextLine();
 				if (tip.length()>0) {
@@ -279,18 +320,20 @@ class ListenMassage extends Thread{
 			case TEXT:
 				int uid = buffer.getSendUID();
 				int receiveuid =buffer.getReceiveUID();
+				String uidNickname = buffer.getUserInfo().getNickName();
+				String receiveuidNickname = "我还没完成";
 				System.out.println("---" + df.format(new Date()) 
 						+ "---");
 				if(receiveuid == 0) {
 					//群发
-					System.out.println(uid + "对所有人说：");
+					System.out.println(uid + "   "+ uidNickname+ "对所有人说：");
 					
 				}else {
 					//点对点发送
 					if (uid == ClientThread.getUid() ) {
-						System.out.println("我对"+ receiveuid +"说：");
+						System.out.println("我对"+ receiveuid + "   "+ receiveuidNickname+"说：");
 					}else {
-						System.out.println(uid + "对我说：");
+						System.out.println(uid + "   "+uidNickname+ "对我说：");
 					}
 					
 					

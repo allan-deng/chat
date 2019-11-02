@@ -27,6 +27,8 @@ public class Massage implements Serializable{
 	private int sendUID ;
 	private int receiveUID ;
 	private String text ;
+	private UserInfo userInfo;
+	private UserDetailInfo userDetailInfo;
 	
 	/**
 	  * 创建一个新的实例 Massage. 
@@ -100,6 +102,35 @@ public class Massage implements Serializable{
 	 */
 	public String getText() {
 		return text;
+	}
+	
+	/**
+	 * setter method
+	 * @param userInfo the userInfo to set
+	 */
+	public void setUserInfo(UserInfo userInfo) {
+		this.userInfo = userInfo;
+	}
+	/**
+	 * setter method
+	 * @param userDetailInfo the userDetailInfo to set
+	 */
+	public void setUserDetailInfo(UserDetailInfo userDetailInfo) {
+		this.userDetailInfo = userDetailInfo;
+	}
+	/**
+	 * getter method
+	 * @return the userInfo
+	 */
+	public UserInfo getUserInfo() {
+		return userInfo;
+	}
+	/**
+	 * getter method
+	 * @return the userDetailInfo
+	 */
+	public UserDetailInfo getUserDetailInfo() {
+		return userDetailInfo;
 	}
 	
 	

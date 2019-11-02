@@ -17,7 +17,10 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Map;
 import java.util.Set;
+
+import cn.allandeng.server.model.ClientsMap;
 
 /**
   * @ClassName: ConsoleInput
@@ -86,10 +89,11 @@ public class ConsoleInput extends Thread {
 	  */
 	private void online(String command) {
 		Set<Integer> clientsID = CreateSocket.getClientsID();
+		ClientsMap<Integer, String> nickname = CreateSocket.getUserNicknames();
 		System.out.println("当前在线用户数：" + clientsID.size());
 		int i = 1  ;
 		for(Integer id:clientsID) {
-			System.out.println("第"+i+"个用户    ID:" + id);
+			System.out.println("第"+i+"个用户    ID:" + id+"   昵称："+nickname.map.get(id));
 			i++;
 		}
 		

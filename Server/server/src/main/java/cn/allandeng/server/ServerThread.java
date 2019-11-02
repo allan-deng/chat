@@ -17,10 +17,12 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Random;
 
 import cn.allandeng.server.model.ClientsMap;
 import cn.allandeng.common.Massage;
 import cn.allandeng.common.MassageType;
+import cn.allandeng.common.UserInfo;
 
 /**
   * @ClassName: ServerThread
@@ -65,7 +67,7 @@ public class ServerThread extends Thread{
 				switch (buffer.getType()) {
 				case ONLINE:
 					//System.out.println("收到上线消息");
-					serverOnline(buffer , CreateSocket.clients ,oos);
+					serverOnline(buffer , CreateSocket.clients ,oos , CreateSocket.userNicknames);
 					buffer = null;
 					break;
 				case OFFLINE:
@@ -74,7 +76,7 @@ public class ServerThread extends Thread{
 					break;
 				case TEXT:
 					//System.out.println(buffer+buffer.getText());
-					serverForwardMassage(buffer , CreateSocket.clients);
+					serverForwardMassage(buffer , CreateSocket.clients ,CreateSocket.userNicknames);
 					buffer = null;
 					break;
 				default:
@@ -94,6 +96,7 @@ public class ServerThread extends Thread{
 
 
 	/**
+	 * @param userNicknames 
 	  * @Title: serverForwardMassage
 	  * @Description: 转发用户消息
 	  * @param @param buffer	需要处理的消息
@@ -101,7 +104,7 @@ public class ServerThread extends Thread{
 	  * @return void    返回类型
 	  * @throws
 	  */
-	private void serverForwardMassage(Massage buffer, ClientsMap<Integer, ObjectOutputStream> clients) {
+	private void serverForwardMassage(Massage buffer, ClientsMap<Integer, ObjectOutputStream> clients, ClientsMap<Integer, String> userNicknames) {
 		int uid = buffer.getSendUID();
 		int receiveuid =buffer.getReceiveUID();
 		if (GlobalVariable.showChatMassage) {
@@ -111,7 +114,7 @@ public class ServerThread extends Thread{
 		if(receiveuid == 0 ) {
 			//群发
 			if (GlobalVariable.showChatMassage) {
-				System.out.println(uid + "对所有人说：");
+				System.out.println(uid + "   "+ userNicknames.map.get(uid)+"对所有人说：");
 			}
 			
 			for (ObjectOutputStream oos:clients.valueSet()) {
@@ -126,7 +129,7 @@ public class ServerThread extends Thread{
 			//点对点发送
 			if (clients.map.containsKey(receiveuid)) {
 				if (GlobalVariable.showChatMassage) {
-					System.out.println(uid + "对" + receiveuid +"说：");
+					System.out.println(uid + "   "+userNicknames.map.get(uid)+ "对" + receiveuid + "   " +userNicknames.map.get(receiveuid)+"说：");
 				}
 				
 				try {
@@ -166,6 +169,7 @@ public class ServerThread extends Thread{
 
 
 	/**
+	 * @param userNicknames 
 	 * @param clients 
 	 * @param oos 
 	  * @Title: serverOnline
@@ -174,25 +178,88 @@ public class ServerThread extends Thread{
 	  * @return void    返回类型
 	  * @throws
 	  */
-	private void serverOnline(Massage buffer, ClientsMap<Integer, ObjectOutputStream> clients, ObjectOutputStream oos) {
+	private void serverOnline(Massage buffer, ClientsMap<Integer, ObjectOutputStream> clients, ObjectOutputStream oos, ClientsMap<Integer, String> userNicknames) {
 		//判断当前用户是否在线
 		int uid = buffer.getSendUID();
-		if (clients.map.containsKey(uid)) {
-			//如果包含则更新输出流
-			System.out.println("用户" + uid +"重新上线了！");
-			clients.map.remove(uid);
-		}else {
-			//若不包含则添加输出流
-			System.out.println("用户" + uid +"上线了！");
-		}
-		clients.put(uid, oos);
-		try {
-			oos.writeObject(new Massage(MassageType.ONLINE_SUCCESS, 0, uid));
-		} catch (IOException e) {
+		String password =buffer.getUserDetailInfo().getPassword();
+		String nickName ;
+		if(validLogin(uid,password)) {
 			
-			e.printStackTrace();
-			System.out.println("用户异常下线：" + uid);
-			//serverClose();
+			nickName = queryNickname(uid);
+			
+			if (clients.map.containsKey(uid)) {
+				//如果包含则更新输出流
+				System.out.println("用户" + uid +"重新上线了！");
+				clients.map.remove(uid);
+			}else {
+				//若不包含则添加输出流
+				System.out.println("用户" + uid +"上线了！");
+			}
+			clients.put(uid, oos);
+			userNicknames.put(uid, nickName);
+			//返回上线结果
+			Massage loginMassage = new Massage(MassageType.ONLINE_SUCCESS,0, uid);
+			loginMassage.setUserInfo(new UserInfo(nickName));
+			try {
+				oos.writeObject(loginMassage);
+			} catch (IOException e) {
+				
+				e.printStackTrace();
+				System.out.println("用户异常下线：" + uid);
+				//serverClose();
+			}
+		}else {
+			try {
+				oos.writeObject(new Massage(MassageType.ONLINE_FAIL, 0, uid));
+			} catch (IOException e) {
+				
+				e.printStackTrace();
+				System.out.println("用户异常下线：" + uid);
+				//serverClose();
+			}
+		}
+		
+		
+		
+	}
+
+
+	/**
+	  * @Title: queryNickname
+	  * @Description: 查询昵称
+	  * @param @param uid
+	  * @param @return    设定文件
+	  * @return String    返回类型
+	  * @throws
+	  */
+	private String queryNickname(int uid) {
+		// TODO Auto-generated method stub
+		//暂时直接用随机字符串代替
+		String str="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	    Random random=new Random();
+	    StringBuffer sb=new StringBuffer();
+	    for(int i=0;i<5;i++){
+	      int number=random.nextInt(62);
+	      sb.append(str.charAt(number));
+	    }
+	    return sb.toString();
+	}
+
+
+	/**
+	  * @Title: validLogin
+	  * @Description: 核实用户名和密码
+	  * @param @param uid
+	  * @param @param password
+	  * @param @return    设定文件
+	  * @return boolean    返回类型
+	  * @throws
+	  */
+	private boolean validLogin(int uid, String password) {
+		if ( uid== Integer.parseInt(password) ) {
+			return true;
+		}else {
+			return false;
 		}
 		
 	}

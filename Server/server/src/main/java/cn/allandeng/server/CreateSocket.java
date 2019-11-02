@@ -32,6 +32,8 @@ public class CreateSocket extends Thread {
 	private static final int SERVER_PORT= 6666 ;
 	//在线用户列表
 	public static ClientsMap<Integer, ObjectOutputStream> clients = new ClientsMap<>() ;
+	//在线用户昵称表
+	public static ClientsMap<Integer, String> userNicknames = new ClientsMap<>() ;
 	public void init() {
 		try (
 				ServerSocket ss = new ServerSocket(SERVER_PORT); //建立监听ServerSocket
@@ -77,5 +79,12 @@ public class CreateSocket extends Thread {
 	 */
 	public static Set<Integer> getClientsID() {
 		return clients.map.keySet();
+	}
+	/**
+	 * getter method
+	 * @return the userNicknames
+	 */
+	public static ClientsMap<Integer, String> getUserNicknames() {
+		return userNicknames;
 	}
 }
