@@ -11,6 +11,8 @@
 package cn.allandeng.client;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -215,6 +217,16 @@ public class ClientThread extends Thread{
 		//tip = keyin.nextLine();
 		if (tip.length()>0) {
 			//System.out.println("收到输入:" + tip);
+			//判断是否为帮助
+			if(tip.equals(":help")) {
+				displayFile("config/help.txt");
+				return true ;
+			}
+			//判断是否为关于
+			if(tip.equals(":about")) {
+				displayFile("config/about.txt");
+				return true ;
+			}
 			//判断是否为下线消息
 			if(tip.equals(":quit")) {
 				sendMassage.setType(MassageType.OFFLINE);
@@ -235,11 +247,24 @@ public class ClientThread extends Thread{
 			}
 			//判断是不是修改昵称
 			if (tip.split(" ")[0].equals(":changenickname")) {
-				
+				String[] s =tip.split(" ");
+				int uid = Integer.parseInt(s[1]);
+				String nickName = s[2];
+				sendMassage.setType(MassageType.QUERY);
+				sendMassage.setText("changenickname " + uid + " " +nickName);
+				//System.out.println("changenickname " + uid + " " +nickName);
+				oos.writeObject(sendMassage);
+				return true ;
 			}
 			//判断是不是修改密码
 			if (tip.split(" ")[0].equals(":changepassword")) {
-				
+				String[] s =tip.split(" ");
+				String oldpassword = s[2];
+				String newpassword = s[3];
+				sendMassage.setType(MassageType.QUERY);
+				sendMassage.setText("changepassword " + uid + " " +oldpassword + " " +newpassword);
+				oos.writeObject(sendMassage);
+				return true ;
 			}
 			//判断是群发还是单发消息
 			//存在@开头并且有：则为群发
@@ -252,6 +277,7 @@ public class ClientThread extends Thread{
 						);
 				sendMassage.setText(tip.substring(tip.indexOf(':')+1, tip.length()));
 				oos.writeObject(sendMassage);
+				return true ;
 				//System.out.println(sendMassage.getText());
 			}else {
 				//System.out.println("群发消息");
@@ -259,16 +285,40 @@ public class ClientThread extends Thread{
 				sendMassage.setReceiveUID(0);
 				sendMassage.setText(tip);
 				oos.writeObject(sendMassage);
+				return true ;
 				//System.out.println(sendMassage);
 			}
 			
 		}
 		return false;
-		
-		
-		
+				
 	}
 
+	/**
+	  * @Title: displayFile
+	  * @Description: 显示文件
+	  * @param @param fileAddress    设定文件
+	  * @return void    返回类型
+	  * @throws
+	  */
+	private void displayFile(String fileAddress) {
+		String encoding = "utf8";
+		String file = fileAddress;
+		
+		try {
+			BufferedReader fr = new BufferedReader(new InputStreamReader(new FileInputStream(new File(file)) , encoding));
+			String lineTxt = "";
+			while ((lineTxt = fr.readLine()) != null)
+            {
+                System.out.println(lineTxt);
+            }
+			fr.close();
+						
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("找不到文件或无法打开文件");
+		}
+	}
 	/**
 	  * @Title: closeClient
 	  * @Description: 关闭流
@@ -363,12 +413,15 @@ class ListenMassage extends Thread{
 			} catch (ClassNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				break;
 			}  catch (SocketException e) {
 				// TODO: handle exception
 				System.out.println("网络错误，服务器已下线？");
+				break;
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				break;
 			}
 			//System.out.println("收到服务器发的消息。");
 			switch (buffer.getType()) {
@@ -381,8 +434,12 @@ class ListenMassage extends Thread{
 						+ "---");
 				if(receiveuid == 0) {
 					//群发
-					System.out.println(uid + "   "+ uidNickname+ "对所有人说：");
 					
+					if (uid == ClientThread.getUid() ) {
+						System.out.println("我对所有人说：");
+					}else {
+						System.out.println(uid + "   "+ uidNickname+ "对所有人说：");
+					}
 				}else {
 					//点对点发送
 					if (uid == ClientThread.getUid() ) {
@@ -398,9 +455,10 @@ class ListenMassage extends Thread{
 				buffer = null;
 				break;
 			case ANSWER:
-				String ans = buffer.getText();
+				String ans = buffer.getText().split(" ")[0];
 				switch (ans) {
 				case "queryonline":
+					//System.out.println("收到新在线用户表");
 					Map<Integer, String> m = (Map<Integer, String>)buffer.getSendObject();
 					ClientThread.userOnline = m ;
 //					int i = 1  ;
@@ -409,7 +467,17 @@ class ListenMassage extends Thread{
 //						i++;
 //					}
 					break;
-
+				case "changepassword":
+					System.out.println("密码修改成功");
+					break;
+				case "changenickname":
+					System.out.println("昵称修改成功");
+					//修改昵称之后更新在线用户表
+					
+					break;
+				case "error":
+					System.out.println("请求错误");
+					break;
 				default:
 					break;
 				}
@@ -418,6 +486,7 @@ class ListenMassage extends Thread{
 				
 				break;
 			}
+			buffer = null;
 		}
 	}
 }
@@ -436,7 +505,7 @@ class QueryOnlineUser extends TimerTask{
 			e.printStackTrace();
 			
 		}
-		new Timer().schedule(new QueryOnlineUser(), 30000);
+		new Timer().schedule(new QueryOnlineUser(), 10000);
 	}
 	
 }

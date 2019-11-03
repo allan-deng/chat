@@ -17,8 +17,11 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
+import cn.allandeng.server.data.Dml;
 import cn.allandeng.server.data.Query;
 import cn.allandeng.server.model.ClientsMap;
 import cn.allandeng.common.Massage;
@@ -113,24 +116,71 @@ public class ServerThread extends Thread{
 	  */
 	private void answerQuery(Massage buffer, ClientsMap<Integer, ObjectOutputStream> clients,
 			ClientsMap<Integer, String> userNicknames) {
-		int uid = buffer.getSendUID();
-		Massage answerMassage = new Massage(MassageType.ANSWER, 0, uid);
-		answerMassage.setText(buffer.getText());
-		answerMassage.setSendObject(userNicknames.map);
-		//发送查询结果
-		if (clients.map.containsKey(uid)) {
+		String command = buffer.getText().split(" ")[0];
+		switch (command) {
+		case "queryonline":
+			int uid = buffer.getSendUID();
+			Massage answerMassage = new Massage(MassageType.ANSWER, 0, uid);
+			answerMassage.setText(buffer.getText());
+			//实现深拷贝，如果使用浅拷贝，只拷贝引用则无法发送更新后的map
+			Map<Integer, String> m = new HashMap<Integer, String>();
+			m.putAll(CreateSocket.userNicknames.map);
+			answerMassage.setSendObject(m);
+			//发送查询结果
+			if (clients.map.containsKey(uid)) {
+				try {
+					clients.map.get(uid).writeObject(answerMassage);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}else {
+				if (GlobalVariable.showChatMassage) {
+					System.out.println("目标用户：" + uid + "不在线");
+				}
+				
+			}
+			break;
+		case "changenickname":
+			int id = Integer.parseInt(buffer.getText().split(" ")[1]);
+			String nickname = buffer.getText().split(" ")[2];
+			
+			Massage answerMassage1 = new Massage(MassageType.ANSWER, 0, id);
+			Dml.updataNickName(id, nickname);
+			CreateSocket.userNicknames.removeByValue(id);
+			CreateSocket.userNicknames.put(id, nickname);
+			answerMassage1.setText("changenickname");
+			
 			try {
-				clients.map.get(uid).writeObject(answerMassage);
+				clients.map.get(id).writeObject(answerMassage1);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}else {
-			if (GlobalVariable.showChatMassage) {
-				System.out.println("目标用户：" + uid + "不在线");
+			break;
+		case "changepassword":
+			int id1 = Integer.parseInt(buffer.getText().split(" ")[1]);
+			String oldpwd = buffer.getText().split(" ")[2];
+			String newpwd = buffer.getText().split(" ")[3];
+			//System.out.println(buffer.getText());
+			Massage answerMassage11 = new Massage(MassageType.ANSWER, 0, id1);
+			if (new Query().isValidLoginInfo(id1, oldpwd)) {
+				Dml.updataPassword(id1, newpwd);
+				answerMassage11.setText("changepassword");
+			}else {
+				answerMassage11.setText("error");
 			}
-			
+			try {
+				clients.map.get(id1).writeObject(answerMassage11);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			break;
+		default:
+			break;
 		}
+		
 	}
 
 

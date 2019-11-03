@@ -31,9 +31,10 @@ public class CreateSocket extends Thread {
 	//监听端口号
 	private static final int SERVER_PORT= 6666 ;
 	//在线用户列表
-	public static ClientsMap<Integer, ObjectOutputStream> clients = new ClientsMap<>() ;
+	//volatile关键字特别重要，需要通知其他线程这个变量已经修改
+	public static volatile ClientsMap<Integer, ObjectOutputStream> clients = new ClientsMap<>() ;
 	//在线用户昵称表
-	public static ClientsMap<Integer, String> userNicknames = new ClientsMap<>() ;
+	public static volatile ClientsMap<Integer, String> userNicknames = new ClientsMap<>() ;
 	public void init() {
 		try (
 				ServerSocket ss = new ServerSocket(SERVER_PORT); //建立监听ServerSocket
