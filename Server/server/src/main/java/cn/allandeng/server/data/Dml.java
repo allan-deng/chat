@@ -179,6 +179,30 @@ public class Dml {
 		insert(uid, pwd, nickName, "", "2000-00-00", false);
 	}
 	
+	/**
+	  * @Title: updataPassword
+	  * @Description: 修改密码
+	  * @param     设定文件
+	  * @return void    返回类型
+	  * @throws
+	  */
+	public static void updataPassword(int uid , String password) {
+		updateData("USERINFO", uid, "PWD", "'"+password+"'");
+
+	}
+	
+	/**
+	  * @Title: updataNickName
+	  * @Description: 修改昵称
+	  * @param @param uid
+	  * @param @param nickName    设定文件
+	  * @return void    返回类型
+	  * @throws
+	  */
+	public static void updataNickName(int uid , String nickName){
+		updateData("USERINFO", uid, "NICKNAME", "'"+nickName+"'");
+	}
+	
 	public static void main(String[] args) {
 		DbConnection.getPropertiseInfo();
 		insert(666, "aaa", "aaa", "aaa", "aaa", true);

@@ -103,7 +103,7 @@ public class DbConnection {
 		try {
 			//获得数据库连接对象
 			con = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-			System.out.println("数据库连接成功！");
+			//System.out.println("数据库连接成功！");
 //			Alert alert = new Alert(AlertType.INFORMATION);
 //			alert.setTitle("提示");
 //			alert.setContentText("数据库连接成功！");

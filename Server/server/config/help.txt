@@ -3,6 +3,13 @@ about		关于Chat
 online		在线用户列表
 displayon	显示用户聊天消息
 displayoff	隐藏用户聊天消息
+adduser		添加新用户
+	adduser [uid] [password] [nickname]
+changepassword	修改用户密码
+	changepassword [uid] [password]
+changenickname	修改用户昵称
+	changenickname [uid] [nickname]
+
 
 ver 0.1
 Allan Deng Copyright @ 2019

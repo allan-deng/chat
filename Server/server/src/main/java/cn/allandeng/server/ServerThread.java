@@ -82,7 +82,7 @@ public class ServerThread extends Thread{
 					break;
 				case QUERY:
 					//处理客户端发过来的指令
-					System.out.println("收到请求");
+					//System.out.println("收到请求");
 					answerQuery(buffer , CreateSocket.clients ,CreateSocket.userNicknames);
 					buffer = null;
 					break;

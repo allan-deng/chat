@@ -51,8 +51,8 @@ public class ClientThread extends Thread{
 	//在线 用户表
 	public static Map<Integer, String> userOnline = new HashMap<>() ;
 	
-	private ObjectInputStream ois = null;
-	private ObjectOutputStream oos = null;
+	private static ObjectInputStream ois = null;
+	private static ObjectOutputStream oos = null;
 	//private Scanner keyin = null;
 	private BufferedReader keyin = null;
 	private InputStream in = new FilterInputStream(System.in){
@@ -186,40 +186,8 @@ public class ClientThread extends Thread{
 			//while(true) {
 			//System.out.println(keyin.hashCode());
 			while((tip = keyin.readLine()) != null) {
-				Massage sendMassage = new Massage(MassageType.TEXT, uid, 0);
-				sendMassage.setUserInfo(ClientMain.userInfo);
-				//System.out.println("收到输入:" + tip);
-				//tip = keyin.nextLine();
-				if (tip.length()>0) {
-					//System.out.println("收到输入:" + tip);
-					//判断是否为下线消息
-					if(tip.equals(":quit")) {
-						sendMassage.setType(MassageType.OFFLINE);
-						oos.writeObject(sendMassage);
-						closeClient();
-						System.exit(1);
-						break;
-					}
-					//判断是群发还是单发消息
-					//存在@开头并且有：则为群发
-					if(tip.charAt(0) == '@' && tip.indexOf(':')>0) {
-						//System.out.println("群发消息");
-						sendMassage.setType(MassageType.TEXT);
-						sendMassage.setReceiveUID(
-								Integer.parseInt(tip.substring(1,tip.indexOf(':')))
-								);
-						sendMassage.setText(tip.substring(tip.indexOf(':')+1, tip.length()));
-						oos.writeObject(sendMassage);
-						//System.out.println(sendMassage.getText());
-					}else {
-						//System.out.println("单发消息");
-						sendMassage.setType(MassageType.TEXT);
-						sendMassage.setReceiveUID(0);
-						sendMassage.setText(tip);
-						oos.writeObject(sendMassage);
-						//System.out.println(sendMassage);
-					}
-				}
+				procesCommand(tip);
+				
 			}
 		} catch (Exception e) {
 			System.out.println("出现故障，系统退出");
@@ -231,6 +199,76 @@ public class ClientThread extends Thread{
 
 	}
 	
+	/**
+	 * @throws IOException 
+	 * @param sendMassage 
+	  * @Title: procesCommand
+	  * @Description: TODO
+	  * @param @param tip    设定文件
+	  * @return void    返回类型
+	  * @throws
+	  */
+	private boolean procesCommand(String tip) throws IOException {
+		Massage sendMassage = new Massage(MassageType.TEXT, uid, 0);
+		sendMassage.setUserInfo(ClientMain.userInfo);
+		//System.out.println("收到输入:" + tip);
+		//tip = keyin.nextLine();
+		if (tip.length()>0) {
+			//System.out.println("收到输入:" + tip);
+			//判断是否为下线消息
+			if(tip.equals(":quit")) {
+				sendMassage.setType(MassageType.OFFLINE);
+				oos.writeObject(sendMassage);
+				closeClient();
+				System.exit(1);
+				return true ;
+			}
+			//判断是否为显示在线用户
+			if(tip.equals(":online")) {
+				int i = 1  ;
+				System.out.println("----在线用户列表----");
+				for(Integer id:ClientThread.userOnline.keySet()) {
+					System.out.println("第"+i+"个用户    ID:" + id+"   昵称："+ClientThread.userOnline.get(id));
+					i++;
+				}
+				return false ;
+			}
+			//判断是不是修改昵称
+			if (tip.split(" ")[0].equals(":changenickname")) {
+				
+			}
+			//判断是不是修改密码
+			if (tip.split(" ")[0].equals(":changepassword")) {
+				
+			}
+			//判断是群发还是单发消息
+			//存在@开头并且有：则为群发
+			if(tip.charAt(0) == '@' && tip.indexOf(':')>0) {
+				//System.out.println("单发消息");
+				
+				sendMassage.setType(MassageType.TEXT);
+				sendMassage.setReceiveUID(
+						Integer.parseInt(tip.substring(1,tip.indexOf(':')))
+						);
+				sendMassage.setText(tip.substring(tip.indexOf(':')+1, tip.length()));
+				oos.writeObject(sendMassage);
+				//System.out.println(sendMassage.getText());
+			}else {
+				//System.out.println("群发消息");
+				sendMassage.setType(MassageType.TEXT);
+				sendMassage.setReceiveUID(0);
+				sendMassage.setText(tip);
+				oos.writeObject(sendMassage);
+				//System.out.println(sendMassage);
+			}
+			
+		}
+		return false;
+		
+		
+		
+	}
+
 	/**
 	  * @Title: closeClient
 	  * @Description: 关闭流
@@ -277,6 +315,14 @@ public class ClientThread extends Thread{
 	 */
 	public static int getUid() {
 		return uid;
+	}
+	
+	/**
+	 * getter method
+	 * @return the oos
+	 */
+	public static ObjectOutputStream getOos() {
+		return oos;
 	}
 }
 
@@ -357,11 +403,11 @@ class ListenMassage extends Thread{
 				case "queryonline":
 					Map<Integer, String> m = (Map<Integer, String>)buffer.getSendObject();
 					ClientThread.userOnline = m ;
-					int i = 1  ;
-					for(Integer id:m.keySet()) {
-						System.out.println("第"+i+"个用户    ID:" + id+"   昵称："+m.get(id));
-						i++;
-					}
+//					int i = 1  ;
+//					for(Integer id:m.keySet()) {
+//						System.out.println("第"+i+"个用户    ID:" + id+"   昵称："+m.get(id));
+//						i++;
+//					}
 					break;
 
 				default:
@@ -380,10 +426,17 @@ class ListenMassage extends Thread{
 class QueryOnlineUser extends TimerTask{
 	@Override
 	public void run() {
-		System.out.println("执行请求");
+		//System.out.println("执行请求");
 		Massage queryMassage = new Massage(MassageType.QUERY, ClientThread.getUid(),0  );
 		queryMassage.setText("queryonline");
-		new Timer().schedule(new QueryOnlineUser(), 1000);
+		try {
+			ClientThread.getOos().writeObject(queryMassage);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			
+		}
+		new Timer().schedule(new QueryOnlineUser(), 30000);
 	}
 	
 }

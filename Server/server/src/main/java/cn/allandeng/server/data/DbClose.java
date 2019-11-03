@@ -32,7 +32,7 @@ public class DbClose {
 		if(null != conn){
 			try{
 				conn.close();
-				System.out.println("数据库连接关闭");
+				//System.out.println("数据库连接关闭");
 			}catch(SQLException e){
 				e.printStackTrace();
 			}
@@ -47,7 +47,7 @@ public class DbClose {
 		if(null != pre){
 			try{
 				pre.close();
-				System.out.println("查询语句关闭");
+				//System.out.println("查询语句关闭");
 			}catch(SQLException e){
 				e.printStackTrace();
 			}
@@ -62,7 +62,7 @@ public class DbClose {
 		if(null != rs){
 			try{
 				rs.close();
-				System.out.println("结果集关闭");
+				//System.out.println("结果集关闭");
 			}catch(SQLException e){
 				e.printStackTrace();
 			}

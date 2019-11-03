@@ -14,6 +14,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import com.server.data.ConnectionFactory;
 
@@ -138,6 +142,25 @@ public class Query {
 		return null;
 	}
 	
+	public Map<Integer,List<String>> getUsers() {
+		String sql ="select UID,PWD,NICKNAME from USERINFO";
+		rs = querySql(sql);
+		Map<Integer,List<String>> result = new HashMap<Integer, List<String>>();
+		try {
+			while(rs.next()){
+				List<String> pwdNickName = new ArrayList<String>();
+				pwdNickName.add(rs.getString(2));pwdNickName.add(rs.getString(3));
+				result.put(rs.getInt(1),pwdNickName);
+			}
+			return result;
+		} catch (SQLException e) {
+			System.out.println("数据库查询出错");
+			e.printStackTrace();
+		} finally {
+			DbClose.close(rs, pre, conn);
+		}
+		return null;
+	}
 	
 	/**
 	  * @Title: main
